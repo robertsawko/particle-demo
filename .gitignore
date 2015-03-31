@@ -1,1 +1,7 @@
 *.swp
+kinematicCloudPositions
+boundary
+faces
+neighbour
+owner
+points
