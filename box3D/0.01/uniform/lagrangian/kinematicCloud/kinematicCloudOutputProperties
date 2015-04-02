@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.3.1                                 |
+|  \\    /   O peration     | Version:  2.3.0                                 |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -10,49 +10,32 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      fvSchemes;
+    location    "0.01/uniform/lagrangian/kinematicCloud";
+    object      kinematicCloudOutputProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
+injectionModel
 {
-    default Euler;
+    model1
+    {
+        massInjected    0.000206658;
+        nInjections     500;
+        parcelsAddedTotal 10;
+        timeStep0       0.01;
+    }
 }
 
-gradSchemes
+patchInteractionModel
 {
-    default         Gauss linear;
+    localInteraction
+    {
+        nEscape         1 ( 0 );
+        massEscape      1 ( 0 );
+        nStick          1 ( 0 );
+        massStick       1 ( 0 );
+    }
 }
 
-divSchemes
-{
-    default         none;
-
-    div(alphaPhic,U.air)    Gauss linearUpwindV unlimited;
-    div(((alpha.air*nuEff.air)*dev2(T(grad(U.air))))) Gauss linear;
-    div(((alpha.air*nuEff)*dev2(T(grad(U.air))))) Gauss linear;
-}
-
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
-
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         corrected;
-}
-
-fluxRequired
-{
-    default         no;
-    p;
-    kinematicCloud:theta;
-}
 
 // ************************************************************************* //
