@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.3.1                                 |
+|  \\    /   O peration     | Version:  2.3.0                                 |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -9,50 +9,12 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      fvSchemes;
+    class       vectorField;
+    location    "0.01/lagrangian/kinematicCloud";
+    object      U;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
-{
-    default Euler;
-}
-
-gradSchemes
-{
-    default         Gauss linear;
-}
-
-divSchemes
-{
-    default         none;
-
-    div(alphaPhic,U.air)    Gauss linearUpwindV unlimited;
-    div(((alpha.air*nuEff.air)*dev2(T(grad(U.air))))) Gauss linear;
-    div(((alpha.air*nuEff)*dev2(T(grad(U.air))))) Gauss linear;
-}
-
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
-
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         corrected;
-}
-
-fluxRequired
-{
-    default         no;
-    p;
-    kinematicCloud:theta;
-}
+10((-0.369589 0.122041 0.362948) (0.430533 0.40059 -0.122106) (-0.28753 0.0770267 -0.328145) (0.311637 -0.266346 0.227187) (-0.0691528 -0.269759 -0.491329) (0.231783 0.0190056 0.0550704) (0.270319 -0.130208 0.127017) (0.476206 0.317858 -0.449335) (0.156511 -0.0165499 0.175546) (-0.260048 0.279361 0.190585))
 
 // ************************************************************************* //

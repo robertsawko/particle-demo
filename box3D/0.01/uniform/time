@@ -1,58 +1,29 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.3.1                                 |
+|  \\    /   O peration     | Version:  2.3.0                                 |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
-    format      ascii;
+    format      binary;
     class       dictionary;
-    object      fvSchemes;
+    location    "0.01/uniform";
+    object      time;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
-{
-    default Euler;
-}
+value           0.01;
 
-gradSchemes
-{
-    default         Gauss linear;
-}
+name            "0.01";
 
-divSchemes
-{
-    default         none;
+index           500;
 
-    div(alphaPhic,U.air)    Gauss linearUpwindV unlimited;
-    div(((alpha.air*nuEff.air)*dev2(T(grad(U.air))))) Gauss linear;
-    div(((alpha.air*nuEff)*dev2(T(grad(U.air))))) Gauss linear;
-}
+deltaT          2e-05;
 
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
+deltaT0         2e-05;
 
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         corrected;
-}
-
-fluxRequired
-{
-    default         no;
-    p;
-    kinematicCloud:theta;
-}
 
 // ************************************************************************* //
