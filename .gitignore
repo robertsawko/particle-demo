@@ -5,3 +5,6 @@ faces
 neighbour
 owner
 points
+__pycache__
+animation
+v-pdf*.csv
