@@ -4,7 +4,7 @@ from __future__ import division
 from esys.lsm import *
 from esys.lsm.util import Vec3, BoundingBox
 from esys.lsm.geometry import CubicBlock
-from hist_and_snaps import hist_and_snaps
+from velocity_snapshots import velocity_snapshots
 from numpy.random import randn
 
 # instantiate a simulation object
@@ -77,7 +77,7 @@ for n, w in enumerate(walls):
 
 
 # add Runnable post processing:
-povcam = hist_and_snaps(sim=sim, interval=100, resolution=100)
-sim.addPreTimeStepRunnable(povcam)
+postproc = velocity_snapshots(sim=sim, interval=100)
+sim.addPreTimeStepRunnable(postproc)
 
 sim.run()
