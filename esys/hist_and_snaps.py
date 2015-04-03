@@ -19,7 +19,7 @@ class hist_and_snaps (Runnable):
     def configure(
         self,
         lookAt=Vec3(0, 0, 0),
-        camPosn=Vec3(0, 0, 30),
+        camPosn=Vec3(0, 0, 20),
         zoomFactor=0.1,
         imageSize=[800, 600]
     ):

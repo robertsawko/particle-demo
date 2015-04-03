@@ -6,10 +6,11 @@ from esys.lsm.util import Vec3, BoundingBox
 from esys.lsm.geometry import CubicBlock
 from hist_and_snaps import hist_and_snaps
 from numpy.random import randn
+from numpy import sqrt
 
 # instantiate a simulation object
 # and initialise the neighbour search algorithm:
-sim = LsmMpi(numWorkerProcesses=1, mpiDimList=[1, 1, 1])
+sim = LsmMpi(numWorkerProcesses=4, mpiDimList=[2, 2, 1])
 sim.initNeighbourSearch(
     particleType="NRotSphere",
     gridSpacing=2.5,
@@ -17,20 +18,23 @@ sim.initNeighbourSearch(
 )
 
 # set the number of timesteps and timestep increment:
-sim.setNumTimeSteps(3000)
-sim.setTimeStepSize(0.001)
-L = 20
+sim.setNumTimeSteps(300000)
+sim.setTimeStepSize(0.0005)
+L = 10
 Ld = L + 1
+kT = 0.1
+a = sqrt(kT)
+
 # specify the spatial domain for the simulation:
 domain = BoundingBox(Vec3(-Ld, -Ld, -Ld), Vec3(Ld, Ld, Ld))
 sim.setSpatialDomain(
     bBox=domain, circDimList=[True, False, False])
 # add a cube of particles to the domain:
-cube = CubicBlock(dimCount=[20, 20, 20], radius=0.1)
+cube = CubicBlock(dimCount=[10, 10, 10], radius=0.1)
 sim.createParticles(cube)
 
 for n in range(sim.getNumParticles()):
-    sim.setParticleVelocity(id=n, Velocity=Vec3(randn(), randn(), randn()))
+    sim.setParticleVelocity(id=n, Velocity=Vec3(a*randn(), a*randn(), a*randn()))
 
 # specify the type of interactions between colliding particles:
 sim.createInteractionGroup(
@@ -77,7 +81,7 @@ for n, w in enumerate(walls):
 
 
 # add Runnable post processing:
-povcam = hist_and_snaps(sim=sim, interval=100, resolution=100)
+povcam = hist_and_snaps(sim=sim, interval=200, resolution=100)
 sim.addPreTimeStepRunnable(povcam)
 
 sim.run()
