@@ -4,7 +4,7 @@ from __future__ import division
 from esys.lsm import *
 from esys.lsm.util import Vec3, BoundingBox
 from esys.lsm.geometry import CubicBlock
-from hist_and_snaps import hist_and_snaps
+from velocity_snapshots import velocity_snapshots
 from numpy.random import randn
 from numpy import sqrt
 
@@ -28,7 +28,7 @@ a = sqrt(kT)
 # specify the spatial domain for the simulation:
 domain = BoundingBox(Vec3(-Ld, -Ld, -Ld), Vec3(Ld, Ld, Ld))
 sim.setSpatialDomain(
-    bBox=domain, circDimList=[True, False, False])
+    bBox=domain, circDimList=[False, False, False])
 # add a cube of particles to the domain:
 cube = CubicBlock(dimCount=[10, 10, 10], radius=0.1)
 sim.createParticles(cube)
@@ -81,7 +81,7 @@ for n, w in enumerate(walls):
 
 
 # add Runnable post processing:
-povcam = hist_and_snaps(sim=sim, interval=200, resolution=100)
-sim.addPreTimeStepRunnable(povcam)
+postproc = velocity_snapshots(sim=sim, interval=100)
+sim.addPreTimeStepRunnable(postproc)
 
 sim.run()
