@@ -13,13 +13,13 @@ from numpy import sqrt
 sim = LsmMpi(numWorkerProcesses=4, mpiDimList=[2, 2, 1])
 sim.initNeighbourSearch(
     particleType="NRotSphere",
-    gridSpacing=2.5,
-    verletDist=0.5
+    gridSpacing=0.2,
+    verletDist=0.1
 )
 
 # set the number of timesteps and timestep increment:
-sim.setNumTimeSteps(300000)
-sim.setTimeStepSize(0.0005)
+sim.setNumTimeSteps(5000000)
+sim.setTimeStepSize(0.0001)
 L = 10
 Ld = L + 1
 kT = 0.1
@@ -30,11 +30,13 @@ domain = BoundingBox(Vec3(-Ld, -Ld, -Ld), Vec3(Ld, Ld, Ld))
 sim.setSpatialDomain(
     bBox=domain, circDimList=[False, False, False])
 # add a cube of particles to the domain:
-cube = CubicBlock(dimCount=[10, 10, 10], radius=0.1)
+cube = CubicBlock(dimCount=[20, 20, 20], radius=0.05)
 sim.createParticles(cube)
 
 for n in range(sim.getNumParticles()):
-    sim.setParticleVelocity(id=n, Velocity=Vec3(a*randn(), a*randn(), a*randn()))
+    sim.setParticleVelocity(
+        id=n,
+        Velocity=Vec3(a*randn(), a*randn(), a*randn()))
 
 # specify the type of interactions between colliding particles:
 sim.createInteractionGroup(
@@ -81,7 +83,7 @@ for n, w in enumerate(walls):
 
 
 # add Runnable post processing:
-postproc = velocity_snapshots(sim=sim, interval=100)
+postproc = velocity_snapshots(sim=sim, interval=1000)
 sim.addPreTimeStepRunnable(postproc)
 
 sim.run()
