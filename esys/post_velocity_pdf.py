@@ -59,26 +59,32 @@ data = dict(
     (
         n,
         np.genfromtxt(
-            "v-{0:04d}.csv".format(n),
+            "pdf/v-{0:04d}.csv".format(n),
             delimiter=' ')
     ) for n in range(N))
+Tdata = np.genfromtxt("sim.csv", delimiter=' ')
+T = Tdata[:, 2]
+t = Tdata[:, 1]
 
-x = np.linspace(0, 5, 100)
+x = np.linspace(0, 4, 300)
+N0 = 0
+N = 1
 
-for n in range(N):
+for n in np.arange(N0, N):
     kde = KDEMultivariate(data[n], bw='normal_reference', var_type='c')
     fig = plt.figure()
     ax = fig.gca()
     fig.subplots_adjust(wspace=0)
+    fig.suptitle("Time = {0:.2f}".format(t[n]), fontsize=7)
 
-    ax.set_ylim(-0.01, 1)
+    ax.set_ylim(-0.01, 2.5)
     plt.xlabel("Velocity norm")
     plt.ylabel("PDF")
     # Fix the seed for reproducibility
     ax.plot(x, kde.pdf(x), label="Simulation")
     ax.plot(
         x,
-        maxwell_boltzman(v=x, m=1, kT=1),
+        maxwell_boltzman(v=x, m=1, kT=T[n]),
         label="Maxwell-Boltzmann")
     ax.legend(loc='upper right', shadow=True)
     fig.savefig(
