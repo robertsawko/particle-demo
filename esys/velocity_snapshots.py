@@ -2,6 +2,7 @@ from esys.lsm import *
 from esys.lsm.util import Vec3
 from esys.lsm.vis import povray
 import csv
+from numpy import array
 
 
 class velocity_snapshots (Runnable):
@@ -11,6 +12,8 @@ class velocity_snapshots (Runnable):
         self.interval = interval
         self.count = 0
         self.configure()
+        f = open("sim.csv".format(self.count), 'w')
+        f.close()
 
     def configure(
         self,
@@ -37,11 +40,20 @@ class velocity_snapshots (Runnable):
             print(" done.")
 
     def velocity_write(self):
-        vs = [
+        vs = array([
             pp.getLinearVelocity().norm()
             for pp in self.sim.getParticleList()
-        ]
-        with open("v-{0:04d}.csv".format(self.count), 'w') as csvfile:
+        ])
+
+        with open("sim.csv".format(self.count), 'a') as csvfile:
+            writer = csv.writer(csvfile, delimiter=' ')
+            writer.writerow([
+                self.count,
+                self.sim.getTimeStep() * self.sim.getTimeStepSize(),
+                # Division as each one of the component is scaled by kT
+                sum(vs**2) / len(vs) / 3.0])
+
+        with open("pdf/v-{0:04d}.csv".format(self.count), 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter=' ')
             for v in vs:
                 writer.writerow([v])
