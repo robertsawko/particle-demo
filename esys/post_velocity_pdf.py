@@ -53,7 +53,9 @@ def set_plt_params(
     plt.rcParams.update(params)
 
 set_plt_params()
-N = 1
+
+N0 = 2480
+N = 4500
 
 data = dict(
     (
@@ -66,16 +68,14 @@ Tdata = np.genfromtxt("sim.csv", delimiter=' ')
 T = Tdata[:, 2]
 t = Tdata[:, 1]
 
-x = np.linspace(0, 4, 300)
-N0 = 0
-N = 1
+x = np.linspace(0, 3, 300)
 
 for n in np.arange(N0, N):
     kde = KDEMultivariate(data[n], bw='normal_reference', var_type='c')
     fig = plt.figure()
     ax = fig.gca()
     fig.subplots_adjust(wspace=0)
-    fig.suptitle("Time = {0:.2f}".format(t[n]), fontsize=7)
+    fig.suptitle("Time = {0:.2f} s".format(t[n]), fontsize=7)
 
     ax.set_ylim(-0.01, 2.5)
     plt.xlabel("Velocity norm")

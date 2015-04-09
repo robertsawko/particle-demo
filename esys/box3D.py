@@ -4,7 +4,7 @@ from __future__ import division
 from esys.lsm import *
 from esys.lsm.util import Vec3, BoundingBox
 from esys.lsm.geometry import CubicBlock
-from velocity_snapshots import velocity_snapshots
+from my_post_processing import POVsnaps, velocity_pdfs, bulk_parameters
 from numpy.random import randn
 from numpy import sqrt
 
@@ -18,7 +18,7 @@ sim.initNeighbourSearch(
 )
 
 # set the number of timesteps and timestep increment:
-sim.setNumTimeSteps(5000000)
+sim.setNumTimeSteps(5000)
 sim.setTimeStepSize(0.0001)
 L = 10
 Ld = L + 1
@@ -72,18 +72,20 @@ for n, w in enumerate(walls):
     )
 
 ## add local viscosity to simulate air resistance:
-#sim.createInteractionGroup(
-    #LinDampingPrms(
-        #name="linDamping",
-        #viscosity=0.001,
-        #maxIterations=100
-    #)
-#)
-
-
+# sim.createInteractionGroup(
+    # LinDampingPrms(
+        # name="linDamping",
+        # viscosity=0.001,
+        # maxIterations=100
+    # )
+# )
 
 # add Runnable post processing:
-postproc = velocity_snapshots(sim=sim, interval=1000)
-sim.addPreTimeStepRunnable(postproc)
+povcam = POVsnaps(sim=sim, interval=1000)
+sim.addPreTimeStepRunnable(povcam)
+velpdf = velocity_pdfs(sim=sim, interval=1000)
+sim.addPreTimeStepRunnable(velpdf)
+bulk = bulk_parameters(sim=sim, interval=1000)
+sim.addPreTimeStepRunnable(bulk)
 
 sim.run()
