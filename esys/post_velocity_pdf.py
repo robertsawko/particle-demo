@@ -15,6 +15,17 @@ def maxwell_boltzman_speed(v, kT, m):
         * np.exp(- (m * v**2) / (2 * kT))
 
 
+def save_contour_plot(x, y, z, filename="pdf.png", title=""):
+    fig = plt.figure()
+    ax = fig.gca()
+    cs = ax.contour(
+        x, y, z, cmap=plt.cm.Paired)
+    ## cs.set_clim(0, 1.6)
+    plt.clabel(cs, inline=1, fontsize=5, fmt="%1.5f")
+    fig.savefig(filename, bbox_inches='tight', dpi=300)
+    plt.close()
+
+
 def set_plt_params(
         relative_fig_width=1.0, landscape=True, page_width=307.3, rescale_h=1):
 
@@ -155,9 +166,9 @@ def time_averaged_pdf(
 
     print "Number of particles {0}".format(data.shape[0])
     # filtering
-    #data = data[np.abs(data[:, 0]) < 0.25, :]
-    #data = data[np.abs(data[:, 1]) < 0.25, :]
-    #data = data[np.abs(data[:, 2]) < 0.25, :]
+    #data = data[np.abs(data[:, 0] - x[0]) < 0.25, :]
+    #data = data[np.abs(data[:, 1] - x[1]) < 0.25, :]
+    #data = data[np.abs(data[:, 2] - x[2]) < 0.25, :]
     #data = data[:, 3:5]
     #print data.shape
 
@@ -186,9 +197,148 @@ def time_averaged_pdf(
         bbox_inches='tight', dpi=300)
     plt.close()
 
+
+def time_averaged_pdf2(
+    N0=0, N=3,
+    vmax=1, resolution=0.05,
+    x1=np.array([0, 0, 0]),  # position
+    x2=np.array([0.1, 0.1, 0.1])  # position
+):
+    """
+    Return pdf p2(v, x)
+    """
+
+    data = np.genfromtxt(
+                "pdf/VX-{0:04d}.csv".format(N0),
+                delimiter=' ')
+    #for n in np.arange(N0 + 1, N0 + N):
+        #data = np.concatenate(
+            #(
+                #data,
+                #np.genfromtxt("pdf/VX-{0:04d}.csv".format(n), delimiter=' ')
+            #),
+            #axis=0)
+
+    number_of_particles = data.shape[0]
+    print "Number of particles {0}".format(number_of_particles)
+
+    # These are ordered pairs so we have to take everything into account
+    pairs = np.zeros(((number_of_particles - 1) * number_of_particles, 12))
+    k = 0
+    #def pairs(lst):
+        #i = iter(lst)
+        #first = prev = item = i.next()
+        #for item in i:
+            #yield prev, item
+            #prev = item
+        #yield item, first
+    for n in range(number_of_particles):
+        # Iterate over all non-n indices
+        for m in range(number_of_particles):
+            if n != m:
+                pairs[k, :] = np.concatenate((data[n, :], data[m, :]), axis=1)
+                k += 1
+
+    print "Number of pairs {0}".format(pairs.shape[0])
+    # filtering
+    #data = data[np.abs(data[:, 0]) < 0.25, :]
+    #data = data[np.abs(data[:, 1]) < 0.25, :]
+    #data = data[np.abs(data[:, 2]) < 0.25, :]
+    #data = data[:, 3:5]
+    #print data.shape
+
+    kde = KDEMultivariate(
+        data=pairs[:, np.array([0, 1, 2, 3, 6, 7, 8, 9])],
+        bw='normal_reference', var_type='cccccccc')
+
+    vx1, vx2 = np.mgrid[-vmax:vmax:resolution, -vmax:vmax:resolution]
+    dA = resolution**2
+    n1 = vx1.shape[0]
+    n2 = vx1.shape[1]
+    pdf = np.zeros((n1, n2))
+    area = 0
+    for i in range(n1):
+        for j in range(n2):
+            v1 = np.array([vx1[i, j]])
+            v2 = np.array([vx2[i, j]])
+            pdf[i, j] = kde.pdf(np.concatenate((x1, v1, x2, v2), axis=1))
+            area += pdf[i, j] * dA
+    save_contour_plot(vx1, vx2, pdf/area, filename="v-pdf2.png")
+
+
+def time_averaged_pdf_product(
+    N0=0, N=3,
+    vmax=1, resolution=0.05,
+    x1=np.array([0, 0, 0]),  # position
+    x2=np.array([0.1, 0.1, 0.1])  # position
+):
+    """
+    Return pdf p2(v, x)
+    """
+
+    data = np.genfromtxt(
+                "pdf/VX-{0:04d}.csv".format(N0),
+                delimiter=' ')
+    #for n in np.arange(N0 + 1, N0 + N):
+        #data = np.concatenate(
+            #(
+                #data,
+                #np.genfromtxt("pdf/VX-{0:04d}.csv".format(n), delimiter=' ')
+            #),
+            #axis=0)
+
+    number_of_particles = data.shape[0]
+    print "Number of particles {0}".format(number_of_particles)
+
+    # filtering
+    #data = data[np.abs(data[:, 0]) < 0.25, :]
+    #data = data[np.abs(data[:, 1]) < 0.25, :]
+    #data = data[np.abs(data[:, 2]) < 0.25, :]
+    #data = data[:, 3:5]
+    #print data.shape
+
+    kde = KDEMultivariate(
+        data=data[:, np.array([0, 1, 2, 3])],
+        bw='normal_reference', var_type='cccc')
+
+    vx1, vx2 = np.mgrid[-vmax:vmax:resolution, -vmax:vmax:resolution]
+    dl = resolution
+    n1 = vx1.shape[0]
+    n2 = vx1.shape[1]
+    pdf1 = np.zeros((n1, n2))
+    pdf2 = np.zeros((n1, n2))
+    area1 = 0
+    area2 = 0
+    for i in range(n1):
+        for j in range(n2):
+            v1 = np.array([vx1[i, j]])
+            v2 = np.array([vx2[i, j]])
+            pdf1[i, j] = kde.pdf(np.concatenate((x1, v1), axis=1))
+            pdf2[i, j] = kde.pdf(np.concatenate((x2, v2), axis=1))
+            area1 += pdf1[i, j] * dl
+            area2 += pdf2[i, j] * dl
+    f1v1 = pdf1 / area1
+    f1v2 = pdf2 / area2
+    f2 = f1v1 * f1v2
+    area1 = 0
+    area2 = 0
+    area3 = 0
+    for i in range(n1):
+        for j in range(n2):
+            area1 += f1v1[i, j] * dl
+            area2 += f1v2[i, j] * dl
+            area3 += f2[i, j] * dl**2
+
+    print area1, area2, area3
+    save_contour_plot(
+        vx1, vx2, f2,
+        filename="v-pdfprod.png")
+
 set_plt_params()
 
 # speed_graphs()
-velocity_graphs(N0=0, N=5000, resolution=0.05)
+# velocity_graphs(N0=0, N=5000, resolution=0.05)
 
-
+# time_averaged_pdf(N0=5, N=10)
+#time_averaged_pdf2(N0=0, N=10)
+time_averaged_pdf_product(N0=0, N=10)
