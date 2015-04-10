@@ -8,7 +8,7 @@ plt.style.use('ggplot')
 plt.ioff()
 
 
-def maxwell_boltzman(v, kT, m):
+def maxwell_boltzman_speed(v, kT, m):
     return \
         (m / (2 * np.pi * kT))**1.5 \
         * 4.0 * np.pi * v**2 \
@@ -52,42 +52,143 @@ def set_plt_params(
 
     plt.rcParams.update(params)
 
-set_plt_params()
 
-N0 = 2480
-N = 4500
+def speed_graphs(N0=0, N=4500, vmax=3, resolution=300):
+    data = dict(
+        (
+            n,
+            np.genfromtxt(
+                "pdf/v-{0:04d}.csv".format(n),
+                delimiter=' ')
+        ) for n in range(N))
+    Tdata = np.genfromtxt("bulk.csv", delimiter=' ')
+    T = Tdata[:, 2]
+    t = Tdata[:, 1]
 
-data = dict(
-    (
-        n,
-        np.genfromtxt(
-            "pdf/v-{0:04d}.csv".format(n),
-            delimiter=' ')
-    ) for n in range(N))
-Tdata = np.genfromtxt("sim.csv", delimiter=' ')
-T = Tdata[:, 2]
-t = Tdata[:, 1]
+    x = np.linspace(0, vmax, resolution)
 
-x = np.linspace(0, 3, 300)
+    for n in np.arange(N0, N):
+        kde = KDEMultivariate(data[n], bw='normal_reference', var_type='c')
+        fig = plt.figure()
+        ax = fig.gca()
+        fig.subplots_adjust(wspace=0)
+        fig.suptitle("Time = {0:.2f} s".format(t[n]), fontsize=7)
 
-for n in np.arange(N0, N):
-    kde = KDEMultivariate(data[n], bw='normal_reference', var_type='c')
+        ax.set_ylim(-0.01, 2.5)
+        plt.xlabel("Velocity norm")
+        plt.ylabel("PDF")
+        # Fix the seed for reproducibility
+        ax.plot(x, kde.pdf(x), label="Simulation")
+        ax.plot(
+            x,
+            maxwell_boltzman_speed(v=x, m=1, kT=T[n]),
+            label="Maxwell-Boltzmann")
+        ax.legend(loc='upper right', shadow=True)
+        fig.savefig(
+            "v-pdf{0:04d}.png".format(n),
+            bbox_inches='tight', dpi=300)
+        plt.close()
+
+
+def velocity_graphs(N0=0, N=4500, vmax=1, resolution=0.05):
+    data = dict(
+        (
+            n,
+            np.genfromtxt(
+                "pdf/VX-{0:04d}.csv".format(n),
+                delimiter=' ')
+        ) for n in range(N))
+    Tdata = np.genfromtxt("bulk.csv", delimiter=' ')
+    # T = Tdata[:, 2]
+    t = Tdata[:, 1]
+
+    x, y = np.mgrid[-vmax:vmax:resolution, -vmax:vmax:resolution]
+
+    for n in np.arange(N0, N):
+        kde = KDEMultivariate(
+            data=data[n][:, 3:5],
+            bw='normal_reference', var_type='cc')
+        fig = plt.figure()
+        ax = fig.gca()
+        fig.subplots_adjust(wspace=0)
+        fig.suptitle("Time = {0:.2f} s".format(t[n]), fontsize=7)
+
+        plt.xlabel("$x$-velocity")
+        plt.ylabel("$y$-velocity")
+        nx = x.shape[0]
+        ny = x.shape[1]
+        pdf = np.zeros((nx, ny))
+        print ("Evaluating the function")
+        for i in range(nx):
+            for j in range(ny):
+                pdf[i, j] = kde.pdf([x[i, j], y[i, j]])
+
+        #cs = ax.contour(x, y, pdf, vmin=0.0, vmax=1.6, label="Simulation")
+        cs = ax.contour(x, y, pdf, label="Simulation", cmap=plt.cm.Paired)
+        cs.set_clim(0, 1.6)
+        plt.clabel(cs, inline=1, fontsize=5, fmt="%1.1f")
+        fig.savefig(
+            "v-pdf{0:04d}.png".format(n),
+            bbox_inches='tight', dpi=300)
+        plt.close()
+
+
+def time_averaged_pdf(
+    N0=0, N=3,
+    vmax=1, resolution=0.05,
+    x=np.array([0, 0, 0])  # position
+):
+    """
+    Return pdf p(v, x)
+    """
+
+    data = np.genfromtxt(
+                "pdf/VX-{0:04d}.csv".format(N0),
+                delimiter=' ')
+    for n in np.arange(N0 + 1, N0 + N):
+        data = np.concatenate(
+            (
+                data,
+                np.genfromtxt("pdf/VX-{0:04d}.csv".format(n), delimiter=' ')
+            ),
+            axis=0)
+
+    print "Number of particles {0}".format(data.shape[0])
+    # filtering
+    #data = data[np.abs(data[:, 0]) < 0.25, :]
+    #data = data[np.abs(data[:, 1]) < 0.25, :]
+    #data = data[np.abs(data[:, 2]) < 0.25, :]
+    #data = data[:, 3:5]
+    #print data.shape
+
+    kde = KDEMultivariate(
+        data=data[:, np.array([0, 1, 2, 3, 4])],
+        bw='normal_reference', var_type='ccccc')
+
+    vx, vy = np.mgrid[-vmax:vmax:resolution, -vmax:vmax:resolution]
+    dA = resolution**2
+    nx = vx.shape[0]
+    ny = vx.shape[1]
+    pdf = np.zeros((nx, ny))
+    area = 0
+    for i in range(nx):
+        for j in range(ny):
+            v = np.array([vx[i, j], vy[i, j]])
+            pdf[i, j] = kde.pdf(np.concatenate((x, v), axis=1))
+            area += pdf[i, j] * dA
     fig = plt.figure()
     ax = fig.gca()
-    fig.subplots_adjust(wspace=0)
-    fig.suptitle("Time = {0:.2f} s".format(t[n]), fontsize=7)
-
-    ax.set_ylim(-0.01, 2.5)
-    plt.xlabel("Velocity norm")
-    plt.ylabel("PDF")
-    # Fix the seed for reproducibility
-    ax.plot(x, kde.pdf(x), label="Simulation")
-    ax.plot(
-        x,
-        maxwell_boltzman(v=x, m=1, kT=T[n]),
-        label="Maxwell-Boltzmann")
-    ax.legend(loc='upper right', shadow=True)
+    cs = ax.contour(vx, vy, pdf/area, label="Simulation", cmap=plt.cm.Paired)
+    cs.set_clim(0, 1.6)
+    plt.clabel(cs, inline=1, fontsize=5, fmt="%1.2f")
     fig.savefig(
-        "v-pdf{0:04d}.png".format(n),
+        "v-pdf.png",
         bbox_inches='tight', dpi=300)
     plt.close()
+
+set_plt_params()
+
+# speed_graphs()
+velocity_graphs(N0=0, N=5000, resolution=0.05)
+
+
