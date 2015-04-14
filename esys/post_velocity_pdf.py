@@ -3,6 +3,7 @@ import matplotlib as mpl
 from statsmodels.nonparametric.kernel_density import KDEMultivariate
 mpl.use("agg")
 import matplotlib.pyplot as plt
+from scipy.stats.distributions import norm
 
 plt.style.use('ggplot')
 plt.ioff()
@@ -66,6 +67,24 @@ def maxwell_boltzman_speed(v, kT, m):
         * np.exp(- (m * v**2) / (2 * kT))
 
 
+def save_1D_plot(
+        x, y, filename="pdf.png", title=None,
+        xlabel="First particle velocity $v_x^{(1)}$",
+        ylabel="Second particle velocity $v_x^{(2)}$"):
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.plot(x, y)
+    # cs.set_clim(0, 1.6)
+    if title is not None:
+        fig.suptitle(title, fontsize=7)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    fig.savefig(filename, bbox_inches='tight', dpi=300)
+    plt.close()
+
+
 def save_contour_plot(
         x, y, z, filename="pdf.png", title=None,
         xlabel="First particle velocity $v_x^{(1)}$",
@@ -80,7 +99,7 @@ def save_contour_plot(
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
-    plt.clabel(cs, inline=1, fontsize=5, fmt="%1.1f")
+    plt.clabel(cs, inline=1, fontsize=5, fmt="%1.3f")
     fig.savefig(filename, bbox_inches='tight', dpi=300)
     plt.close()
 
@@ -212,7 +231,14 @@ def data_to_pdf(data, coords):
     return kde.pdf(coords)
 
 
-def point_stationary_pdf(
+def box_to_pdf(data, coords, x=np.array([0, 0, 0]), a=0.5):
+    data_box = box_to_particles(data, x=x, a=a)
+    data_box = data_box[:, 3]
+    pdf_box = data_to_pdf(data_box, coords)
+    return pdf_box
+
+
+def post_point_stationary_pdf(
     N0=0, N=3,
     vmax=1, resolution=0.05,
     x=np.array([0, 0, 0])  # position
@@ -376,7 +402,63 @@ def box_stationary_pdf_product(
         vx1, vx2, (pdf1*pdf2).reshape(vx1.shape),
         filename="v-pdfprod.png", title="$f^{(1)}(v^{(1)})f^{(1)}(v^{(2)}_x)$")
 
+
+def normal_pdf_box_vs_point():
+    N = 3000
+    D = 3
+    L = 10
+    resolution = 0.01
+    vmax = 0.5
+    num_of_interals = np.floor(2*vmax / resolution)
+    np.random.seed(1)
+    sigma = 0.1
+    # Positions will be uniformy distributed
+    pos = 2 * L * (np.random.rand(N, D) - 0.5)
+    # Velocities will normally distributed
+    vel = sigma * np.random.randn(N, D)
+    data = np.concatenate((pos, vel), axis=1)
+    data_box = box_to_particles(data, x=np.array([0, 0, 0]), a=2)
+    data_box = data_box[:, 3]
+    print "Number of particles in a box {0}".format(data_box.shape[0])
+
+    # vx, vy = np.mgrid[-vmax:vmax:resolution, -vmax:vmax:resolution]
+    vx = np.linspace(-vmax, vmax, num_of_interals)
+    pdf_box = data_to_pdf(data_box, vx)
+
+    kde = KDEMultivariate(
+        data=data[:, np.array([0, 1, 2, 3])],
+        bw='normal_reference', var_type='cccc')
+
+    print kde.bw
+    dl = resolution
+    pdf_point = np.zeros((num_of_interals, 1))
+    # Need to calculate integral \int p(vx, vy, x, y, z) dvx dvy
+    area = 0
+    for n, v in enumerate(vx):
+        vv = np.array([v])
+        pdf_point[n] = \
+            kde.pdf(np.concatenate((np.array([0, 0, 0]), vv), axis=1))
+        area += pdf_point[n]
+    area *= dl
+    pdf_point /= area
+
+    pdf_true = (norm(0, sigma).pdf(vx))
+
+    fig = plt.figure()
+    ax = fig.gca()
+    l1, = ax.plot(vx, pdf_point)
+    l2, = ax.plot(vx, pdf_box)
+    l3, = ax.fill(vx, pdf_true, ec='gray', fc='gray', alpha=0.4)
+    # cs.set_clim(0, 1.6)
+
+    plt.legend([l1, l2, l3], ["Point approach", "Box approach", "Gaussian"])
+    fig.savefig("compare.png", bbox_inches='tight', dpi=300)
+    plt.close()
+
 set_plt_params()
+
+# normal_pdf_box_vs_point()
+
 
 
 #box_stationary_pdf(N0=4000, N=100)
