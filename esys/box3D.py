@@ -4,9 +4,19 @@ from __future__ import division
 from esys.lsm import *
 from esys.lsm.util import Vec3, BoundingBox
 from esys.lsm.geometry import CubicBlock
-from my_post_processing import POVsnaps, velocity_pdfs, bulk_parameters
+from my_post_processing import bulk_parameters, velocity_and_position_output, POVsnaps
 from numpy.random import randn
+from numpy.random import rand
+from numpy.random import seed
 from numpy import sqrt
+
+
+def uniform(L=10):
+    return Vec3(
+        2*L*rand() - L,
+        2*L*rand() - L,
+        2*L*rand() - L,
+        )
 
 # instantiate a simulation object
 # and initialise the neighbour search algorithm:
@@ -18,7 +28,7 @@ sim.initNeighbourSearch(
 )
 
 # set the number of timesteps and timestep increment:
-sim.setNumTimeSteps(5000)
+sim.setNumTimeSteps(5000000)
 sim.setTimeStepSize(0.0001)
 L = 10
 Ld = L + 1
@@ -30,8 +40,13 @@ domain = BoundingBox(Vec3(-Ld, -Ld, -Ld), Vec3(Ld, Ld, Ld))
 sim.setSpatialDomain(
     bBox=domain, circDimList=[False, False, False])
 # add a cube of particles to the domain:
-cube = CubicBlock(dimCount=[20, 20, 20], radius=0.05)
-sim.createParticles(cube)
+#cube = CubicBlock(dimCount=[20, 20, 20], radius=0.05)
+#sim.createParticles(cube)
+N = 100
+seed(1234)
+for n in range(N):
+    p = NRotSphere(id=n, posn=uniform(), radius=0.05, mass=1.0)
+    sim.createParticle(p)
 
 for n in range(sim.getNumParticles()):
     sim.setParticleVelocity(
@@ -83,9 +98,11 @@ for n, w in enumerate(walls):
 # add Runnable post processing:
 povcam = POVsnaps(sim=sim, interval=1000)
 sim.addPreTimeStepRunnable(povcam)
-velpdf = velocity_pdfs(sim=sim, interval=1000)
-sim.addPreTimeStepRunnable(velpdf)
+#velpdf = velocity_pdfs(sim=sim, interval=1000)
+#sim.addPreTimeStepRunnable(velpdf)
 bulk = bulk_parameters(sim=sim, interval=1000)
 sim.addPreTimeStepRunnable(bulk)
+v_and_x = velocity_and_position_output(sim=sim, interval=1000)
+sim.addPreTimeStepRunnable(v_and_x)
 
 sim.run()

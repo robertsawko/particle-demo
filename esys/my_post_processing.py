@@ -57,7 +57,7 @@ class POVsnaps (Runnable):
         )
 
 
-class velocity_pdfs (Runnable):
+class speed_output (Runnable):
     def __init__(self, sim, interval):
         Runnable.__init__(self)
         self.sim = sim
@@ -76,15 +76,15 @@ class velocity_pdfs (Runnable):
             print(" done.")
 
     def velocity_write(self):
-        vs = array([
+        speeds = array([
             pp.getLinearVelocity().norm()
             for pp in self.sim.getParticleList()
         ])
 
         with open("pdf/v-{0:04d}.csv".format(self.count), 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter=' ')
-            for v in vs:
-                writer.writerow([v])
+            for s in speeds:
+                writer.writerow([s])
 
 
 class bulk_parameters (Runnable):
@@ -119,3 +119,39 @@ class bulk_parameters (Runnable):
             # Division as each one of the component is scaled by kT
             sum(vs**2) / len(vs) / 3.0])
         self.f.flush()
+
+
+class velocity_and_position_output (Runnable):
+    def __init__(self, sim, interval):
+        Runnable.__init__(self)
+        self.sim = sim
+        self.interval = interval
+        self.count = 0
+
+    def run(self):
+        time_step = self.sim.getTimeStep()
+        if (time_step == 1 or (time_step % self.interval) == 0):
+            print(
+                "Writing velocities for time step {0}...".format(time_step),
+                end="",
+                flush=True)
+            self.velocity_write()
+            self.count += 1
+            print(" done.")
+
+    def velocity_write(self):
+        vs = array([
+            pp.getLinearVelocity()
+            for pp in self.sim.getParticleList()
+        ])
+        xs = array([
+            pp.getPosition()
+            for pp in self.sim.getParticleList()
+        ])
+
+        with open("pdf/VX-{0:04d}.csv".format(self.count), 'w') as csvfile:
+            writer = csv.writer(csvfile, delimiter=' ')
+            for n, v in enumerate(vs):
+                writer.writerow([
+                    xs[n][0], xs[n][1], xs[n][2],
+                    v[0], v[1], v[2]])

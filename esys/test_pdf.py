@@ -6,21 +6,30 @@ from post_velocity_pdf import save_contour_plot
 
 def test_normal():
     np.random.seed(1)
+    sigma = 0.1
+    N = 1000
+    vmax = 1
+    data = sigma * np.random.randn(N)
+    x = np.linspace(-vmax, vmax, 100)
+    fapprox = data_to_pdf(data, x)
+    ftrue = 1 / (sigma * np.sqrt(2.0 * np.pi)) * np.exp(- x / (2 * sigma**2))
+    error = np.sum(np.abs(fapprox - ftrue)) * (vmax / 50) / (2 * vmax)
+    assert_almost_equal(error, 0)
 
 
 def test_uniform():
-    np.random.seed(1)
+    np.random.seed(12)
 
 
 def test_independence():
     """
     This is supposed to check whether f2(x,y) = f1(x)f(y)
     """
-    np.random.seed(1234)
-    N = 50000
-    sigma = 0.1
+    np.random.seed(123)
+    N = 200000
+    sigma = 0.2
     vmax = 1
-    resolution = 0.05
+    resolution = 0.1
     mean = [0, 0]
     cov = [[sigma, 0], [0, sigma]]
     data = np.random.multivariate_normal(mean, cov, N)
@@ -30,5 +39,5 @@ def test_independence():
     f11 = data_to_pdf(data[:, 0], x.flatten())
     f12 = data_to_pdf(data[:, 1], y.flatten())
 
-    cumulative_error = np.sum((f2 - f11 * f12) * resolution**2)
-    assert_almost_equal(cumulative_error, 0, decimal=3)
+    error = np.sum(np.abs((f2 - f11 * f12)) * resolution**2) / (2 * vmax)**2
+    assert_almost_equal(error, 0, decimal=2)
