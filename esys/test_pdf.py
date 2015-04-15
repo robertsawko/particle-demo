@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from post_velocity_pdf import data_to_pdf, box_to_pdf
 from scipy.integrate import simps
-from scipy.stats.distributions import norm
+from scipy.stats.distributions import norm, uniform
 
 
 N = 1000
@@ -40,6 +40,13 @@ def test_normal_pdf():
 
 def test_uniform():
     np.random.seed(12)
+    a = np.sqrt(6) * sigma
+    data_uniform = uniform(-a, a).rvs(N)
+    x = np.linspace(-vmax, vmax, 100)
+    fapprox = data_to_pdf(data_uniform, x)
+    ftrue = uniform(-a, a).pdf(x)
+    error = relative_L2_error(fapprox, ftrue, x)
+    assert_almost_equal(error, 0, decimal=2)
 
 
 def test_independence():
